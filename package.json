@@ -1,0 +1,20 @@
+{
+  "name": "reverse-photo-lookup",
+  "version": "1.0.0",
+  "description": "Service to search images for their content",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "node main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justinoboyle/reverse-photo-lookup.git"
+  },
+  "author": "Justin O'Boyle <www.justinoboyle.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/justinoboyle/reverse-photo-lookup/issues"
+  },
+  "homepage": "https://github.com/justinoboyle/reverse-photo-lookup#readme"
+}
