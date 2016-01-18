@@ -1,17 +1,21 @@
 <html>
   <head>
     <title>Reverse image lookup API</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-7s5uDGW3AHqw6xtJmNNtr+OBRJUlgkNJEo78P4b0yRw= sha512-nNo+yCHEyn0smMxSswnf/OnX6/KwJuZTlNZBjauKhTK0c+zT+q5JOCx0UFhXQ6rJR9jg6Es8gPuD2uZcYDLqSw==" crossorigin="anonymous">
   </head>
   <body>
       <div class="container">
+        <br /> <br />
+        <button onclick="uploadImage()" type="button" class="btn btn-default btn-lg">
+          Take Photo
+        </button>
       <form id="uploadForm"
           enctype="multipart/form-data"
           action="https://temp.justinoboyle.com/upload"
           method="post">
-      <input type="file" name="image" /> <br />
-      <input type="submit" value="Upload Image" name="submit">
-      <span id = "status"></span>
+      <input id="fileSelectButton" type="file" name="image" style="height:0px;overflow:hidden" /> <br />
+      <div id = "status"></span>
     </form>
           </div>
   </body>
@@ -19,7 +23,12 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery.form/3.51/jquery.form.min.js"></script>
   <script>
   PFX_URL = "/proxy/?url=https://images.google.com/searchbyimage?image_url=";
-  IMG_LINK_PFX = "https://temp.justinoboyle.com/download/";
+  IMG_PRX_PFX = "https://images.weserv.nl/?url=";
+  IMG_LINK_PFX = "temp.justinoboyle.com/download/";
+
+  function uploadImage() {
+    $("#fileSelectButton").click();
+  }
 
   function httpGetAsync(theUrl, callback)
     {
@@ -33,10 +42,12 @@
     }
 
   $(document).ready(function() {
-
+    jQuery('#fileSelectButton').change(function() {
+      $("#uploadForm").submit();
+    });
      $('#uploadForm').submit(function() {
 		 $("#status").empty().text("File is uploading...");
-
+// http://www.crime-research.org/media/logotip.gif
         $(this).ajaxSubmit({
 
             error: function(xhr) {
@@ -46,14 +57,27 @@
             success: function(response) {
               $("#status").empty().text("Reading image...");
     					var res = JSON.parse(response);
-              var tempURL = PFX_URL + encodeURIComponent(IMG_LINK_PFX + res.name);
+              var imageLink = IMG_PRX_PFX + encodeURIComponent(IMG_LINK_PFX + res.name) + "&w=1000&h=1000&t=square&a=center";
+              var tempURL = PFX_URL + encodeURIComponent(imageLink);
+              console.log(imageLink);
               console.log(tempURL);
               httpGetAsync(tempURL, function(data) {
-                console.log(data);
                 var el = document.createElement( 'html' );
                 el.innerHTML = data;
+                try {
                 var obj = el.getElementsByClassName("_gUb")[0].innerHTML;
                 $("#status").empty().text(obj);
+                console.log("Google thinks it's: " + obj);
+              }catch(e) {
+                $("#status").empty().text("Just a second...");
+                var l = el.getElementsByTagName("a");
+                for(var i in l) {
+                  if(l[i].innerHTML == "Visually similar images") {
+                    tryFor(l[i].href);
+                    break;
+                  }
+                }
+              }
               })
             }
 	});
@@ -61,5 +85,46 @@
 	return false;
     });
 });
+function tryFor(url) {
+  url = url.replace(window.location.host, "www.google.com");
+  url = "/proxy/?url=" + url;
+  console.log("Trying for " + url);
+  httpGetAsync(url, function(data) {
+    var el = document.createElement('html');
+    console.log(1);
+    el.innerHTML = data;
+    console.log(2);
+    var l = el.getElementsByClassName("rg_meta");
+    console.log(l);
+    var titles = [];
+    for(var i in l) {
+      try {
+      var s = JSON.parse(l[i].innerHTML).s;
+      titles.push(s);
+    }catch(e){}
+    }
+    console.log("Titles: " + titles);
+    var fullTitleString = "";
+    for(var i in titles) fullTitleString += titles[i] + " ";
+    console.log("full title string: " + fullTitleString);
+    var wordCounts = { };
+    str = fullTitleString.toLowerCase();
+    console.log(fullTitleString);
+    var words = str.split(/\b/);
+
+    for(var i = 0; i < words.length; i++)
+      if(words[i].length > 4)
+        wordCounts[words[i]] = (wordCounts[words[i]] || 0) + 1;
+    var wordCountsNew = { };
+    var list = ""
+    for(var i in wordCounts) {
+      if(wordCounts[i] > 4)
+      list += i + " ";
+    }
+    list += "</ul>"
+    $("#status").empty().html(list);
+
+  });
+}
   </script>
 </html>
